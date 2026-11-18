@@ -1,0 +1,39 @@
+
+name: Build WAVE X APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Prepare project
+        run: |
+          unzip WAVE_X_Android_Project.zip -d extracted
+          flutter create --platforms=android --org com.wavex.app --project-name wave_x build_app
+          cp extracted/wave_x/lib/main.dart build_app/lib/main.dart
+          cp extracted/wave_x/pubspec.yaml build_app/pubspec.yaml
+
+      - name: Build APK
+        working-directory: build_app
+        run: |
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WAVE-X-Android-APK
+          path: build_app/build/app/outputs/flutter-apk/app-release.apk
